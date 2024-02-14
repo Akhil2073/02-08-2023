@@ -360,7 +360,6 @@ pipeline {
 
 
 
-
 BLUE OCEAN: to enhance the jenkins dashboard.
 
 Dashboard -- > Manage Jenkins -- > Plugins -- > Available plugins -- > Blue Ocean -- > select -- > install -- > Go back to the top page -- > 
