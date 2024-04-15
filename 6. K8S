@@ -19,19 +19,21 @@ A : APPLICATION
 
 
 COMPONENTS:
+-----------
 MASTER:
 
 1. API SERVER: communicate with user (takes command execute & give op)
 2. ETCD: database of cluster (stores complete info of a cluster)
-3. SCHEDULER: schedules pods on worker node (depends on hw of node)
-4. CONTROLLER: control the k8s objects (n/w, service, volume)
+3. SCHEDULER: schedules pods on worker node (depends on hardware of the node)
+4. CONTROLLER: control the k8s objects (network, service and volume)
 
 WORKER:
 
 1. KUBELET : its an agent (it will inform all activites to master)
-2. KUBEPROXY: it deals with nlw (ip, networks, ports)
-3. POD : group of conatiners (inside pod we have app)
+2. KUBEPROXY: it deals with network (ip, networks, ports)
+3. POD : group of conatiners (inside pod we have app). Pod encapsulates container.
 
+================================================================================
 
 CLUSTER:
 1. SELF MANAGED: WE NEED TO CREATE & MANAGE THEM
@@ -66,8 +68,23 @@ REQUIREMENTS:
 Internet connection
 Container or virtual machine manager, such as: Docker.
 
-Kubectl is the command line tool for k8s
-if we want to execute commands we need to use kubectl.
+===============================================================
+
+Kubectl: It is the command line tool for k8s,
+         if we want to execute commands we need to use kubectl.
+---------------------
+UPDATE vs UPGRADE:
+--------------------
+- apt update refreshes the package metadata, while apt upgrade installs the package upgrades.
+- apt update does not change any installed packages, it just updates the list of available packages 
+  and versions. apt upgrade will install the newer package versions.
+- apt update should always be run before apt upgrade to ensure you have the latest information 
+  about available package updates.
+- apt upgrade can also upgrade the Linux kernel package, while apt-get upgrade cannot, 
+  for that you need to use apt-get dist-upgrade.
+So in short, apt update prepares your system for upgrades, 
+       while apt upgrade actually performs the package upgrades based on the updated metadata.
+
 
 SETUP:
 sudo apt update -y
@@ -85,20 +102,29 @@ sudo echo "$(cat kubectl.sha256) kubectl" | sha256sum --check
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 sudo minikube start --driver=docker --force
 
+===============================================================
+deployment --> replicaset --> pod --> container
+
+ kubectl api-resources : To show all the available resources
+
 POD:
+---------
 It is a smallest unit of deployment in K8's.
-It is a group of containers.
-Pods are ephemeral (short living objects)
+It includes a container or group of containers.
+Pods are ephemeral (ephemeral means short living objects)
 Mostly we can use single container inside a pod but if we required, we can create multiple containers inside a same pod.
 when we create a pod, containers inside pods can share the same network namespace, and can share the same storage volumes .
 While creating pod, we must specify the image, along with any necessary configuration and resource limits.
 K8's cannot communicate with containers, they can communicate with only pods.
- We can create this pod in two ways, 
+ 
+We can create this pod in two ways, 
 1. Imperative(command) 
-2. Declarative (Manifest file)
+2. Declarative (Manifest file) ==> which is used in real time.
 
 
 IMPERATIVE:
+
+synatx: kubectl run pod1 --image <image-name>
 
 kubectl run pod1 --image vinodvanama/paytmmovies:latest
 kubectl get pod
@@ -120,7 +146,10 @@ spec:
       name: cont1
 
 kubectl apply -f pod.yml
-
+kubectl get pod
+kubectl get pod -o wide
+kubectl describe pod pod1
+kubectl delete pod pod2
 
 HISTORY:
  1  vim minikube.sh
@@ -130,7 +159,7 @@ HISTORY:
     5  kubectl get pod
     6  kubectl run pod2 --image vinodvanama/paytmtrain:latest
     7  kubectl get pod
-    8  kubectl grt pod -o wide
+    8  kubectl get pod -o wide
     9  kubectl get pod -o wide
    10  kubectl describe pod pod1
    11  kubectl delete pod pod2
@@ -143,9 +172,13 @@ HISTORY:
    18  cat pod.yml
    19  history
 ===============================================
+
+
 REPLICASET:
+------------
 it will create multiple copies of same pod.
 if we delete one pod automatically it will create new pod.
+This includes auto healing property.
 
 
 LABELS: is used to craete the particular pods as a single unit.
@@ -169,26 +202,33 @@ spec:
     metadata:
       labels:
         app: swiggy
+      name: swiggy-rs
     spec:
       containers:
       - name: cont1
         image: nginx
 
 
-To list rs		:kubectl get rs/replicaset
-To show addtional info	:kubectl get rs -o wide
-To show complete info	:kubectl describe rs name-of-rs
-To delete the rs	:kubectl delete rs name-of-rs
-to get lables of pods 	: kubectl get pods -l app=swiggy
-TO scale rs		: kubectl scale rs/swiggy-rs --replicas=10 (LIFO)
+ReplicaSet is also termed as rs in short.
+ kubectl api-resources          : To show all the available resources
+ kubectl get rs/replicaset      : To list rs
+ kubectl get rs -o wide         : To show addtional info	
+ kubectl describe rs <rs-name>  : To show complete info	
+ kubectl delete rs <rs-name>    : To delete the rs	
+ kubectl get pods -l app=swiggy : To get lables of pods
+ kubectl scale rs/swiggy-rs --replicas=10 (LIFO) : TO scale rs	
+ 
 
 DRAWBACKS:
-1. we cant rollin and rollout, we cant update the application in rs.
+1. we can't rollin and rollout, we can't update the application in rs.
+
+===============================================
 
 DEPLOYMENT:
+------------
 deploy -- > rs -- > pods
 we can update the application.
-its high level k8s objects.
+its high level k8s objects. There is no downtime in this application which also means it's highly available.
 
 vim deploy.yml
 
@@ -213,15 +253,15 @@ spec:
         image: nginx
 
 
-To list deployment	:kubectl get deploy
-To show addtional info	:kubectl get deploy -o wide
-To show complete info	:kubectl describe deploy name-of-deployment
-To delete the deploy	:kubectl delete deploy name-of-deploy
-to get lables of pods 	:kubectl get pods -l app=swiggy
-TO scale deploy		:kubectl scale deploy/name-of-deploy --replicas=10 (LIFO)
-To edit deploy		:kubectl edit deploy/name-of-deploy
-to show all pod labels	:kubectl get pods --show-labels
-To delete all pods	:kubectl delete pod --all
+To list deployment	       : kubectl get deploy
+To show addtional info	   : kubectl get deploy -o wide
+To show complete info	    : kubectl describe deploy name-of-deployment
+To delete the deploy	     : kubectl delete deploy name-of-deploy
+to get lables of pods 	   : kubectl get pods -l app=swiggy
+TO scale deploy		         : kubectl scale deploy/name-of-deploy --replicas=10 (LIFO)
+To edit deploy		          : kubectl edit deploy/name-of-deploy
+to show all pod labels	   : kubectl get pods --show-labels
+To delete all pods	       : kubectl delete pod --all
 
 
 
@@ -315,6 +355,7 @@ HISTORY:
 root@ip-172-31-17-73:~#
 
 =======================================================
+
 INFRASTRUCUTRE: Resource used to run our application on cloud.
 EX: servers, Vpc, LB, Asg
 Highly availablility : More than one server
@@ -344,13 +385,13 @@ Amazon EKS , MINIKUBE, KUBEADM, RANCHER, TERRAFORM, HELM.
 
 keys -- > iam -- > user -- > craete users -- > name: kops -- > attach polocies directly -- > AdministratorAccess -- > next -- > create 
 select user -- > security credentials -- > Access keys -- > create Access keys 
--- > cli -- > confirm -- > crearte Access keys -- > download file
+-- > cli -- > confirm -- > create Access keys -- > download file
 
 
 PREREQUSITES:
 iam: to give permission to create infra
 bucket: used to store cluster info
-versioning: to retrive the deleted objects on bucket
+versioning: to retrive the deleted objects on bucket. Backup for the bucket (s3)
 
 SETUP:
 
@@ -400,7 +441,7 @@ Note: bucket will not delete
 
 ===============================================
 
-CRIPT:
+SCRIPT:
 RUN BELOW COMMANDS MANUALLY
 #vim .bashrc
 #export PATH=$PATH:/usr/local/bin/
@@ -430,22 +471,24 @@ kops validate cluster --wait 10m
 NAMESPACES:
 
 NAMESPACE: It is used to divide the cluster to multiple teams on real time.
-it is used to isolate the env.
+it is used to isolate the env. The same cluster can be used by dev team / testing team / prod team
 
 CLUSTER: HOUSE
 NAMESPACES: ROOM
 
 Each namespace is isolated.
-if your are room-1 are you able to see room-2.
-we cant access the objects from one namespace to another namespace.
+if your are room-1 are you not able to see room-2.
+we can't access the objects from one namespace to another namespace.
 
 
 TYPES:
 
 default           : Is the default namespace, all objects will create here only
 kube-node-lease   : it will store object which is taken from one namespace to another.
-kube-public	  : all the public objects will store here.      
-kube-system 	  : default k8s will create some objects, those are storing on this ns.
+kube-public	      : all the public objects will store here.      
+kube-system 	     : default k8s will create some objects, those are storing on this ns. k8s info. is stored here.
+
+=============================================================================
 
 kubectl get pod -n kube-system	: to list all pods in kube-system namespace
 kubectl get pod -n default	: to list all pods in default namespace
@@ -474,15 +517,27 @@ chmod +x kubecolor
 mv kubecolor /usr/local/bin/
 kubecolor get po
 
-==============================================================================
+=================================================================================================================================
 
 
-SERVICE: It is used to expose the application in k8s.
+
+SERVICE: It is used to expose the application to the outside world (or) public (or) users in k8s.
 
 TYPES:
-1. CLUSTERIP: It will work inside the cluster.
-it will not expose to outer world.
+1. LoadBalancer
+2. ClusterIP
+3. NodePort
 
+1. CLUSTERIP: It will work inside the cluster.
+              It will not expose to outer world. 
+              It works with the loosely coupled pods to create a communication among all connected pods
+
+===================================================
+
+pod:
+=====
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -504,6 +559,10 @@ spec:
         image: rahamshaik/moviespaytm:latest
         ports:
           - containerPort: 80
+===================================================
+service:
+======== 
+
 ---
 apiVersion: v1
 kind: Service
@@ -516,12 +575,21 @@ spec:
   ports:
     - port: 80
 
+===================================================
+
 DRAWBACK:
 We cannot use app outside.
 
-2. NODEPORT: It will expose our application in a particular port.
-Range: 30000 - 32767 (in sg we need to give all traffic)
+=============================================================================================================================
 
+2. NODEPORT: It will expose our application in a particular port.
+             Range: 30000 - 32767 (in sg we need to give all traffic)
+===================================================
+
+pod:
+=====
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -543,6 +611,10 @@ spec:
         image: rahamshaik/trainservice:latest
         ports:
           - containerPort: 80
+===================================================
+service:
+=========
+
 ---
 apiVersion: v1
 kind: Service
@@ -560,10 +632,16 @@ spec:
 
 NOTE: UPDATE THE SG (REMOVE OLD TRAFFIC AND GIVE ALL TRAFFIC & SSH)
 DRAWBACK:
-PORT RESTRICTION.
+PORT RESTRICTION. This is restricted to only 2767 ports.
+======================================================================================================
 
 3. LOADBALACER: It will expose our app and distribute load blw pods.
+                This is the best service approach to follow.
 
+pod:
+======
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -585,6 +663,11 @@ spec:
         image: rahamshaik/trainservice:latest
         ports:
           - containerPort: 80
+===================================================
+
+service:
+========
+
 ---
 apiVersion: v1
 kind: Service
@@ -598,7 +681,8 @@ spec:
     - port: 80
       targetPort: 80
 
-======================================================================
+=========================================================================================================================
+
 
 DAY-06:
   
